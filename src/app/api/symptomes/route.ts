@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     data: {
       journeeId,
       heure: heure || null,
-      type: symptome || null,
+      symptome: symptome || null,
       localisation: localisation || null,
       intensite10: intensite != null ? Number(intensite) : null,
       commentaire: commentaire || null,
