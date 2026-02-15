@@ -1,0 +1,242 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  nom       String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  journees  Journee[]
+
+  @@map("users")
+}
+
+model Journee {
+  id           String              @id @default(cuid())
+  date         DateTime            @db.Date
+  userId       String              @map("user_id")
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
+  hydratations Hydratation[]
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mictions     Miction[]
+  notes        Note[]
+  repas        Repas[]
+  selles       Selle[]
+  symptomes    Symptome[]
+  tensions     TensionArterielle[]
+
+  @@unique([userId, date])
+  @@index([date])
+  @@map("journees")
+}
+
+model AlimentRef {
+  id            String         @id @default(cuid())
+  nom           String         @unique
+  kcal          Float?
+  prot          Float?
+  lip           Float?
+  gluc          Float?
+  fib           Float?
+  na            Float?
+  k             Float?
+  ca            Float?
+  mg            Float?
+  oxa           Float?
+  pral          Float?
+  ig            Float?
+  cg            Float?
+  actif         Boolean        @default(true)
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  repasAliments RepasAliment[]
+
+  @@map("aliments_ref")
+}
+
+model SolutionRef {
+  id           String        @id @default(cuid())
+  nom          String        @unique
+  nacl         Float?
+  khco3        Float?
+  nahco3       Float?
+  citrateK     Float?        @map("citrate_k")
+  citrateNa    Float?        @map("citrate_na")
+  mgSel        Float?        @map("mg_sel")
+  caSel        Float?        @map("ca_sel")
+  na           Float?
+  k            Float?
+  hco3         Float?
+  cl           Float?
+  actif        Boolean       @default(true)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  hydratations Hydratation[]
+
+  @@map("solutions_ref")
+}
+
+model SupplementRef {
+  id               String            @id @default(cuid())
+  nom              String            @unique
+  dosage           String?
+  actif            Boolean           @default(true)
+  createdAt        DateTime          @default(now()) @map("created_at")
+  repasSupplements RepasSupplement[]
+
+  @@map("supplements_ref")
+}
+
+model Repas {
+  id                     String            @id @default(cuid())
+  journeeId              String            @map("journee_id")
+  heure                  String?
+  numeroRepas            Int?              @map("numero_repas")
+  naclG                  Float?            @map("nacl_g")
+  kCitrateMeq            Float?            @map("k_citrate_meq")
+  marchePostPrandialeMin Int?              @map("marche_post_prandiale_min")
+  commentaire            String?
+  createdAt              DateTime          @default(now()) @map("created_at")
+  updatedAt              DateTime          @updatedAt @map("updated_at")
+  journee                Journee           @relation(fields: [journeeId], references: [id], onDelete: Cascade)
+  aliments               RepasAliment[]
+  supplements            RepasSupplement[]
+
+  @@index([journeeId])
+  @@map("repas")
+}
+
+model RepasAliment {
+  id        String     @id @default(cuid())
+  repasId   String     @map("repas_id")
+  alimentId String     @map("aliment_id")
+  poidsG    Float      @map("poids_g")
+  aliment   AlimentRef @relation(fields: [alimentId], references: [id])
+  repas     Repas      @relation(fields: [repasId], references: [id], onDelete: Cascade)
+
+  @@index([repasId])
+  @@map("repas_aliments")
+}
+
+model RepasSupplement {
+  id           String        @id @default(cuid())
+  repasId      String        @map("repas_id")
+  supplementId String        @map("supplement_id")
+  quantite     Float?
+  dosage       String?
+  repas        Repas         @relation(fields: [repasId], references: [id], onDelete: Cascade)
+  supplement   SupplementRef @relation(fields: [supplementId], references: [id])
+
+  @@index([repasId])
+  @@map("repas_supplements")
+}
+
+model Hydratation {
+  id           String       @id @default(cuid())
+  journeeId    String       @map("journee_id")
+  heure        String?
+  volumeMl     Float?       @map("volume_ml")
+  solutionId   String?      @map("solution_id")
+  periodeRepas String?      @map("periode_repas")
+  commentaire  String?
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  journee      Journee      @relation(fields: [journeeId], references: [id], onDelete: Cascade)
+  solution     SolutionRef? @relation(fields: [solutionId], references: [id])
+
+  @@index([journeeId])
+  @@map("hydratations")
+}
+
+model Miction {
+  id           String   @id @default(cuid())
+  journeeId    String   @map("journee_id")
+  heure        String?
+  volumeMl     Float?   @map("volume_ml")
+  saturation10 Int?     @map("saturation_10")
+  moussePct    Int?     @map("mousse_pct")
+  odeurDesc    String?  @map("odeur_desc")
+  odeur10      Int?     @map("odeur_10")
+  sg           String?
+  pH           Float?
+  sang         String?
+  commentaire  String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  journee      Journee  @relation(fields: [journeeId], references: [id], onDelete: Cascade)
+
+  @@index([journeeId])
+  @@map("mictions")
+}
+
+model Symptome {
+  id           String   @id @default(cuid())
+  journeeId    String   @map("journee_id")
+  heure        String?
+  symptome     String?
+  localisation String?
+  intensite10  Int?     @map("intensite_10")
+  commentaire  String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  journee      Journee  @relation(fields: [journeeId], references: [id], onDelete: Cascade)
+
+  @@index([journeeId])
+  @@map("symptomes")
+}
+
+model TensionArterielle {
+  id          String   @id @default(cuid())
+  journeeId   String   @map("journee_id")
+  heure       String?
+  delais      String?
+  position    String?
+  systolique  Int?
+  diastolique Int?
+  fc          Int?
+  pp          Int?
+  pam         Int?
+  ratioTadFc  Float?   @map("ratio_tad_fc")
+  commentaire String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  journee     Journee  @relation(fields: [journeeId], references: [id], onDelete: Cascade)
+
+  @@index([journeeId])
+  @@map("tensions_arterielles")
+}
+
+model Selle {
+  id          String   @id @default(cuid())
+  journeeId   String   @map("journee_id")
+  heure       String?
+  consistance String?
+  commentaire String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  journee     Journee  @relation(fields: [journeeId], references: [id], onDelete: Cascade)
+
+  @@index([journeeId])
+  @@map("selles")
+}
+
+model Note {
+  id          String   @id @default(cuid())
+  journeeId   String   @map("journee_id")
+  heure       String?
+  commentaire String
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  journee     Journee  @relation(fields: [journeeId], references: [id], onDelete: Cascade)
+
+  @@index([journeeId])
+  @@map("notes")
+}
