@@ -206,7 +206,12 @@ function RepasForm({ refs, journeeId, onSaved }: { refs: Refs; journeeId: string
     if (!heure || aliments.some(a => !a.id || a.poids <= 0)) return;
     setSubmitting(true);
     try {
-      await postJSON("/api/repas", { journeeId, heure, numeroRepas, aliments });
+      await postJSON("/api/repas", { 
+        journeeId, 
+        heure, 
+        numeroRepas, 
+        aliments: aliments.map(a => ({ alimentId: a.id, poidsG: a.poids }))
+      });
       setHeure(""); setNumeroRepas(1); setAliments([]);
       onSaved();
     } finally { setSubmitting(false); }
